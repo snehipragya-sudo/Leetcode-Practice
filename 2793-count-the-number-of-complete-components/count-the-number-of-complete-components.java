@@ -1,40 +1,60 @@
 class Solution {
-    static int V, E;
-
     public int countCompleteComponents(int n, int[][] edges) {
-        List<Integer>[] A = new ArrayList[n];
-        Arrays.setAll(A, _ -> new ArrayList<>());
-
-        for (int[] e : edges) {
-            A[e[0]].add(e[1]);
-            A[e[1]].add(e[0]);
+        DisjointSetPotd dsj=new DisjointSetPotd(n);
+        for(int[]row:edges){
+            dsj.unionByRank(row[0],row[1]);
         }
-
-        boolean[] vis = new boolean[n];
-        int res = 0;
-
-        for (int i = 0; i < n; i++) {
-            boolean state = vis[i];
-
-            if (!state) {
-                V = 0; E = 0;
-
-                dfs(i, A, vis);
-
-                if (E == V * (V - 1)) res++;
+        int ans=0;
+        for(int i=0;i<n;i++){
+            dsj.findParent(i);
+        }
+        Map<Integer,Integer>vertex=new HashMap<>();
+        Map<Integer,Integer>edgeCount=new HashMap<>();
+        for(int i=0;i<n;i++){
+            int root= dsj.parent[i];
+            vertex.put(root,vertex.getOrDefault(root,0)+1);
+        }
+        for(int[]row:edges){
+            int root=dsj.findParent(row[0]);
+            edgeCount.put(root,edgeCount.getOrDefault(root,0)+1);
+        }
+        for(int root:vertex.keySet()){
+            int v=vertex.get(root);
+            int e=edgeCount.getOrDefault(root,0);
+            if(e==v*(v-1)/2)ans++;
+        }
+        return ans;
+    }
+    public static class DisjointSetPotd{
+        int[]rank;
+        int[]parent;
+        DisjointSetPotd(int n){
+            rank=new int[n];
+            parent=new int[n];
+            for(int i=0;i<n;i++){
+                rank[i]=0;
+                parent[i]=i;
             }
         }
-
-        return res;
-    }
-
-    private void dfs(int x, List<Integer>[] A, boolean[] vis) {
-        V++;
-        E += A[x].size();
-        vis[x] = true;
-
-        for (int state : A[x])
-            if (!vis[state])
-                dfs(state, A, vis);
+        public int findParent(int node){
+            if(node==parent[node])return node;
+            int ultimateParent=findParent(parent[node]);
+            parent[node]=ultimateParent;
+            return parent[node];
+        }
+        public void unionByRank(int u,int v){
+            int pu=findParent(u);
+            int pv=findParent(v);
+            if(pu==pv)return;
+            if(rank[pv]<rank[pu]){
+                parent[pv]=pu;
+            }else if(rank[pv]>rank[pu]){
+                parent[pu]=pv;
+            }else{
+                parent[pv]=pu;
+                int rankU=rank[pu];
+                rank[pu]=rankU+1;
+            }
+        }
     }
 }
